@@ -1,0 +1,35 @@
+{
+  "version": 3,
+  "carry": {
+    "largebox": {
+      "low":  { "strategy": "mocap", "clip": "carrywalk_low_largebox" },
+      "mid":  { "strategy": "mocap", "clip": "carry_mid_largebox" },
+      "high": { "strategy": "mocap", "clip": "carry_high_largebox" }
+    },
+    "plasticbox": {
+      "low":  { "strategy": "mocap", "clip": "carrywalk_low_plasticbox" },
+      "mid":  { "strategy": "mocap", "clip": "carry_mid_largebox", "borrowed_from": "largebox" },
+      "high": { "strategy": "mocap", "clip": "carry_high_largebox", "borrowed_from": "largebox" }
+    }
+  },
+  "largebox": {
+    "low": {
+      "lift_end": 39,
+      "lower_start": 73
+    },
+    "mid": {
+      "lift_end": 94,
+      "lower_start": 155
+    },
+    "high": {
+      "lift_end": 95,
+      "lower_start": 167
+    }
+  },
+  "plasticbox": {
+    "low": {
+      "lift_end": 39,
+      "lower_start": 73
+    }
+  }
+}

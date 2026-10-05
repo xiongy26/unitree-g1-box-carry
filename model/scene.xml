@@ -1,0 +1,25 @@
+<mujoco model="g1_viewer_scene">
+  <!-- G1 由 main.js 在加载时把 model/g1.xml 的 inner XML（顶级元素，含 <worldbody>/<actuator>/<sensor>/<keyframe>）拼到这里。
+       必须放在 <mujoco> 的直接子级；嵌进 <worldbody> 会触发 schema violation。 -->
+
+  <option integrator="implicitfast" timestep="0.002"/>
+
+  <default>
+    <geom contype="0" conaffinity="0"/>
+  </default>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.18 0.22 0.30" rgb2="0.06 0.07 0.10" width="256" height="256"/>
+  </asset>
+
+  <visual>
+    <map znear="0.01"/>
+  </visual>
+
+  <worldbody>
+    <light pos="0 0 4" dir="0 0 -1" directional="true"/>
+    <!-- 地面 16×14m（工厂方案 D1/A4：半边长 6 6 → 8 7）；name="floor" 被
+         stackCore.footClearances 按名引用，必须保留 -->
+    <geom name="floor" type="plane" pos="0 0 0" size="8 7 0.1" rgba="0.28 0.33 0.36 1" contype="1" conaffinity="1"/>
+  </worldbody>
+</mujoco>

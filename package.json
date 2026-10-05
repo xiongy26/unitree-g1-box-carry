@@ -1,0 +1,16 @@
+{
+  "name": "unitree-g1-box",
+  "version": "0.1.0",
+  "private": true,
+  "description": "宇树 G1 人形机器人 MuJoCo + Three.js 浏览器可视化（运动回放/搬箱/行走策略推理）",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "serve": "python3 serve.py",
+    "check": "node tools/checks/headless_check.mjs",
+    "check:unit": "node tools/checks/headless_check.mjs --unit-only",
+    "check:contact": "node tools/checks/contact_plan_check.mjs",
+    "check:manipulation": "python3 tools/checks/check_manipulation.py",
+    "check:recorder": "node tools/checks/recorder_check.mjs http://localhost:8000 http://localhost:9223",
+    "smoke": "node tools/checks/browser_smoke.mjs http://localhost:8000 http://localhost:9223"
+  }
+}

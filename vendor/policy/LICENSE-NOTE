@@ -1,0 +1,16 @@
+G1 velocity 行走策略权重（本目录全部文件）
+==========================================
+
+source : https://github.com/unitreerobotics/unitree_rl_lab
+path   : deploy/robots/g1_29dof/config/policy/velocity/v0/exported/policy.onnx
+commit : 4960b84732b0c2ec593dccbfe963fda1bcd7b1e3
+license: Apache-2.0（Copyright 2025 Unitree Robotics）
+
+本目录内容为该 ONNX 权重的 JS 运行时导出件（非修改版衍生数据）：
+- g1_velocity_v0.weights.bin : MLP 各层 W/b float32 顺序拼接（布局见 manifest.json arch）
+- golden.bin                 : 前向一致性 fixture（导出期以 onnxruntime 参考生成）
+- manifest.json              : 装订参数单一事实源（obs 顺序/joint_map/增益/cmd 范围）
+
+导出与校验脚本：tools/pipeline/export_policy_weights.py（复跑命令见 README「许可」节）。
+导出脚本以 Apache-2.0 同条款提供；本权重仅用于本地演示，再分发请保留 Unitree
+Apache-2.0 声明（https://www.apache.org/licenses/LICENSE-2.0）。

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Unitree G1 · MuJoCo WASM Viewer</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; font-family: system-ui, "PingFang SC", "Microsoft YaHei", sans-serif; }
+    #app { position: fixed; inset: 0; }
+
+    .panel {
+      position: fixed; z-index: 10;
+      background: rgba(16, 20, 28, 0.72);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 14px;
+      color: #e8ecf4;
+    }
+
+    #topbar { top: 16px; left: 16px; padding: 14px 18px; max-width: 320px; }
+    #topbar h1 { font-size: 16px; font-weight: 650; letter-spacing: 0.02em; }
+    #topbar h1 em { font-style: normal; color: #6fb2ff; }
+    #hint { margin-top: 6px; font-size: 12.5px; line-height: 1.55; color: #a8b3c4; }
+
+    #controls { top: 16px; right: 16px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+    .row { display: flex; gap: 8px; }
+    button {
+      font: inherit; font-size: 13px; cursor: pointer;
+      color: #dfe6f2; background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 9px; padding: 8px 14px;
+      transition: background 0.15s, transform 0.05s;
+    }
+    button:hover { background: rgba(255, 255, 255, 0.14); }
+    button:active { transform: scale(0.97); }
+    button.active { background: #2f6fed; border-color: #2f6fed; color: #fff; }
+    #record-btn.rec { background: #b3261e; border-color: #e53935; color: #fff; }
+
+    select {
+      font: inherit; font-size: 13px; color: #dfe6f2;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 9px; padding: 8px 6px;
+    }
+
+    #hud {
+      bottom: 16px; left: 16px; padding: 10px 16px;
+      display: flex; gap: 18px; align-items: center;
+      font-size: 13px; color: #a8b3c4;
+    }
+    #hud b { color: #fff; font-size: 20px; font-variant-numeric: tabular-nums; }
+    #hud .label { font-size: 11px; color: #77839a; display: block; }
+
+    /* 固定角落实景小地图（工厂方案 D5/S5）：右下角面板，默认开启 */
+    #minimap-panel { right: 16px; bottom: 16px; padding: 8px; }
+    #minimap {
+      display: block; width: 320px; height: 280px;
+      border-radius: 8px; background: rgba(10, 14, 20, 0.55);
+    }
+    .map-heading { display:flex; justify-content:space-between; align-items:center; font-size:12px; margin-bottom:6px; }
+    #minimap-zoom { padding:3px 8px; font-size:11px; }
+    .map-legend { font-size:10px; display:flex; justify-content:space-between; margin-top:6px; }
+    #minimap-panel.hidden { display: none; }
+
+    #loading {
+      position: fixed; inset: 0; z-index: 50;
+      display: flex; flex-direction: column; gap: 18px;
+      align-items: center; justify-content: center;
+      background: #0d1119; color: #cfd8e6;
+      transition: opacity 0.5s;
+    }
+    #loading.done { opacity: 0; pointer-events: none; }
+    .spinner {
+      width: 42px; height: 42px; border-radius: 50%;
+      border: 4px solid rgba(255,255,255,0.12); border-top-color: #2f6fed;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loading-bar-wrap { width: 280px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.1); overflow: hidden; }
+    #loading-bar { height: 100%; width: 0%; background: #2f6fed; transition: width 0.2s; }
+    #loading-text { font-size: 14px; }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three/three.module.js",
+        "three/addons/": "./vendor/three/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="app"></div>
+
+  <div id="topbar" class="panel">
+    <h1>G1 · <em>料箱搬运工作站</em></h1>
+    <div id="hint">蓝色料箱搬运入架 · 两层货架槽位 · 通道避障</div>
+  </div>
+
+  <div id="controls" class="panel">
+    <div class="row">
+      <button id="mode-idle" class="active">静止</button>
+      <button id="mode-walk">前倾 demo</button>
+      <button id="mode-stack">料箱上架 (3)</button>
+    </div>
+    <div class="row">
+      <select id="layers-sel" title="堆垛层数（下一轮生效；可用 1-2 层：下层 + 上层货架格）">
+        <option value="1">1 层</option>
+        <option value="2" selected>2 层</option>
+      </select>
+      <select id="cols-sel" title="堆垛列数（下一轮生效）">
+        <option value="1">1 列</option>
+        <option value="2" selected>2 列</option>
+      </select>
+      <select id="boxtype-sel" title="箱型（下一轮生效）">
+        <option value="largebox">大料箱</option>
+        <option value="plasticbox" selected>小料箱</option>
+      </select>
+    </div>
+    <div class="row">
+      <button id="reset-btn">重置 (R)</button>
+      <button id="pause-btn">暂停</button>
+    </div>
+    <div class="row">
+      <button id="record-btn" title="录制机器人画面 + 右下角小地图（不含控制面板），V 键开始/停止；料箱上架完成后自动收片下载">● 录制 (V)</button>
+    </div>
+    <div class="row">
+      <button class="cam" data-pos="5,-2.5,2.7" data-target="1.8,1.1,0.75">正面斜视</button>
+      <button class="cam" data-pos="8,1,2.8" data-target="2.2,1.1,0.6">侧面</button>
+      <button class="cam" data-pos="6,-5,4" data-target="2.2,1.2,0.7">远观</button>
+      <button class="cam" data-pos="10,-9,8" data-target="0.5,1,0.5">厂房全景</button>
+    </div>
+    <div class="row">
+      <select id="speed-sel" title="仿真速度">
+        <option value="0.25">0.25×</option>
+        <option value="0.5">0.5×</option>
+        <option value="1" selected>1.0×</option>
+        <option value="1.5">1.5×</option>
+      </select>
+      <button id="minimap-btn" class="active" title="俯视小地图开关">小地图</button>
+    </div>
+  </div>
+
+  <div id="hud" class="panel">
+    <div><span class="label">仿真时间</span><b id="simtime">—</b></div>
+    <div><span class="label">状态</span><b id="fps" style="font-size:13px">—</b></div>
+    <div><span class="label">料箱上架</span><b id="stack-status" style="font-size:13px">—</b></div>
+  </div>
+
+  <div id="minimap-panel" class="panel">
+    <div class="map-heading"><span>规划路线</span><button id="minimap-zoom" type="button">全厂</button></div>
+    <canvas id="minimap" width="320" height="280"></canvas>
+    <div class="map-legend"><span style="color:#4dc9ff">━ 路线</span> <span style="color:#ffd166">＋ 目标</span> <span style="color:#fff">▲ 机器人</span></div>
+  </div>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <div id="loading-text">初始化…</div>
+    <div id="loading-bar-wrap"><div id="loading-bar"></div></div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
